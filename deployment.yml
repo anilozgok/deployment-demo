@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-demo-app
+  template:
+    metadata:
+        labels:
+            app: deployment-demo-app
+    spec:
+      containers:
+        - name: deployment-demo-app
+          image: gcr.io/PROJECT_ID/IMAGE_NAME:TAG
+          imagePullPolicy: Always

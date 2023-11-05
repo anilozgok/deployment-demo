@@ -1,0 +1,65 @@
+name: Build and Deploy to GKE
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  PROJECT_ID: ${{secrets.GKE_PROJECT}}
+  CLUSTER_NAME: deployment-demo-cluster-1
+  CLUSTER_ZONE: europe-central2
+  DEPLOYMENT_NAME: deployment-demo-gke
+  IMAGE_NAME: deployment-demo-app
+  TAG: ${{  github.ref_name }}
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Google Cloud CLI
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        with:
+          service_account_key: ${{ secrets.GKE_SA_KEY }}
+          project_id: ${{ env.PROJECT_ID }}
+          export_default_credentials: true
+
+      - name: Configure Docker
+        run: |-
+          gcloud --quiet auth configure-docker
+
+      - name: Get GKE Credentials
+        run: |-
+          gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone ${{ env.CLUSTER_ZONE }}
+
+      - name: Build Image
+        run: |-
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ env.TAG }} .
+
+      - name: Publish Image to GCR
+        run: |-
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}    
+
+      - name: Set up Kustomize
+        run: |-
+          curl -sfLo kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
+          chmod u+x ./kustomize
+
+      - name: Deploy
+        run: |-
+          ./kustomize edit set image gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+          ./kustomize build . | kubectl apply -f -
+          kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }}
+          kubectl get services -o wide
