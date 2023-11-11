@@ -15,4 +15,4 @@ spec:
       containers:
         - name: deployment-demo-app
           image: gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA
-          imagePullPolicy: ifNotPresent
+          imagePullPolicy: IfNotPresent
