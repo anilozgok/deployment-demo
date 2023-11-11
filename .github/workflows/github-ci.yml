@@ -10,7 +10,7 @@ env:
   CLUSTER_NAME: s-foo-demo-c1
   CLUSTER_ZONE: us-central1-c
   DEPLOYMENT_NAME: foo-deployment
-  IMAGE: deployment-demo-app
+  IMAGE_NAME: deployment-demo-app
 
 jobs:
   setup-build-publish-deploy:
