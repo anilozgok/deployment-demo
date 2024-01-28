@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: deployment-demo
+  name: deployment-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-demo
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: deployment-demo
+    spec:
+      containers:
+      - image: docker.io/library/deployment-demo-image:latest
+        name: deployment-demo-image
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deployment-demo
+  namespace: default
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: deployment-demo
+  type: NodePort
+
